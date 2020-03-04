@@ -77,10 +77,10 @@ the existing contents *will be deleted*. This may cause an outage or loss of non
     3. The operator assumes cluster-wide permissions to access secrets, which may not be appropriate in some multitenant scenarios
 
 3. The operator does not handle renaming gracefully. If you create a ManagedSecret and later change the name of the secret it references, the operator *will* create a new secret for the new name, but it *will not* clean up the old one. You should bear this in mind if you do not have ad-hoc access to your Kubernetes cluster and you care about leaving old secrets in the environment. This can be effectively worked around by:  
-  1. Creating a new ManagedSecret with the desired name 
-  2. Updating your services to consume this secret
-  3. Opting-in to finalization on the old ManagedSecret
-  4. Deleting the old ManagedSecret
+    1. Creating a new ManagedSecret with the desired name
+    2. Updating your services to consume this secret
+    3. Opting-in to finalization on the old ManagedSecret
+    4. Deleting the old ManagedSecret
 
 # Project Status
 This project is used in production and END. Clothing and is feature-complete, however it is relatively young. It may not be bug-free and it has not been tested on a broadly-configured set of Kubernetes clusters. The code should work in most sensible cases and is likely fixable in others, but you should not rely on it working out-of-the-box the way you might with a mature tool.
