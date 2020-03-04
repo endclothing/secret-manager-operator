@@ -3,7 +3,7 @@ RUN adduser --uid 1993 --disabled-password scratchuser
 RUN apk add git
 RUN mkdir /build
 ADD . /build/
-WORKDIR /buil
+WORKDIR /build
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags '-extldflags "-static"' -o main main.go
 
 FROM scratch
