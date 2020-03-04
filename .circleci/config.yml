@@ -4,14 +4,14 @@ jobs:
  build:
   docker:
    - image: circleci/golang:1.13-alpine
-     steps:
-      - checkout
+  steps:
+   - checkout
 
-      - setup_remote_docker
+   - setup_remote_docker
 
-      - run:
-         docker build -t quay.io/endclothing/secret-manager-operator:$CIRCLE_SHA1 .
+   - run:
+      docker build -t quay.io/endclothing/secret-manager-operator:$CIRCLE_SHA1 .
 
-      - run: |
-         echo "$DOCKER_PASS" | docker login quay.io --username $DOCKER_USER --password-stdin
-         docker push quay.io/endclothing/secret-manager-operator:$CIRCLE_SHA1
+   - run: |
+      echo "$DOCKER_PASS" | docker login quay.io --username $DOCKER_USER --password-stdin
+      docker push quay.io/endclothing/secret-manager-operator:$CIRCLE_SHA1
