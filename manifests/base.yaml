@@ -48,7 +48,7 @@
             },
             "containers": [
                {
-                  "image": "gcr.io/prod-233014/o-secret-manager:1c676a7c1ae62e22a66a036ebccd434380b4ed2b",
+                  "image": "quay.io/endclothing/secret-manager-operator:1f18571938ce0824d187731176b99cc38792077e",
                   "livenessProbe": {
                      "httpGet": {
                         "path": "/",
