@@ -1,0 +1,276 @@
+---
+{
+   "apiVersion": "apps/v1",
+   "kind": "Deployment",
+   "metadata": {
+      "labels": {
+         "app": "o-secret-manager"
+      },
+      "name": "o-secret-manager-deployment",
+   },
+   "spec": {
+      "replicas": 1,
+      "revisionHistoryLimit": 1,
+      "selector": {
+         "matchLabels": {
+            "app": "o-secret-manager"
+         }
+      },
+      "template": {
+         "metadata": {
+            "labels": {
+               "app": "o-secret-manager"
+            }
+         },
+         "spec": {
+            "affinity": {
+               "podAntiAffinity": {
+                  "preferredDuringSchedulingIgnoredDuringExecution": [
+                     {
+                        "podAffinityTerm": {
+                           "labelSelector": {
+                              "matchExpressions": [
+                                 {
+                                    "key": "app",
+                                    "operator": "In",
+                                    "values": [
+                                       "o-secret-manager"
+                                    ]
+                                 }
+                              ]
+                           },
+                           "topologyKey": "failure-domain.beta.kubernetes.io/zone"
+                        },
+                        "weight": 100
+                     }
+                  ]
+               }
+            },
+            "containers": [
+               {
+                  "image": "gcr.io/prod-233014/o-secret-manager:1c676a7c1ae62e22a66a036ebccd434380b4ed2b",
+                  "livenessProbe": {
+                     "httpGet": {
+                        "path": "/",
+                        "port": 8080
+                     },
+                     "initialDelaySeconds": 120,
+                     "periodSeconds": 5,
+                     "timeoutSeconds": 5
+                  },
+                  "name": "o-secret-manager",
+                  "ports": [
+                     {
+                        "containerPort": 8080,
+                        "name": "http"
+                     }
+                  ],
+                  "readinessProbe": {
+                     "httpGet": {
+                        "path": "/",
+                        "port": 8080
+                     },
+                     "initialDelaySeconds": 15,
+                     "periodSeconds": 5,
+                     "timeoutSeconds": 5
+                  },
+                  "resources": {
+                     "limits": {
+                        "cpu": "0.1",
+                        "memory": "50Mi"
+                     },
+                     "requests": {
+                        "cpu": "0.1",
+                        "memory": "50Mi"
+                     }
+                  },
+                  "securityContext": {
+                     "allowPrivilegeEscalation": false,
+                     "capabilities": {
+                        "drop": [
+                           "ALL"
+                        ]
+                     },
+                     "privileged": false
+                  }
+               }
+            ],
+            "securityContext": {
+               "runAsNonRoot": true,
+               "runAsUser": 1993
+            },
+            "serviceAccountName": "o-secret-manager-sa"
+         }
+      }
+   }
+}
+---
+{
+   "apiVersion": "v1",
+   "kind": "ServiceAccount",
+   "metadata": {
+      "name": "o-secret-manager-sa",
+   }
+}
+---
+{
+   "apiVersion": "v1",
+   "kind": "Service",
+   "metadata": {
+      "labels": {
+         "app": "o-secret-manager"
+      },
+      "name": "o-secret-manager-service",
+   },
+   "spec": {
+      "ports": [
+         {
+            "name": "http",
+            "port": 80,
+            "protocol": "TCP",
+            "targetPort": 8080
+         }
+      ],
+      "selector": {
+         "app": "o-secret-manager"
+      },
+      "type": "ClusterIP"
+   }
+}
+---
+{
+   "apiVersion": "apiextensions.k8s.io/v1beta1",
+   "kind": "CustomResourceDefinition",
+   "metadata": {
+      "name": "managedsecrets.endclothing.com"
+   },
+   "spec": {
+      "group": "endclothing.com",
+      "names": {
+         "kind": "ManagedSecret",
+         "plural": "managedsecrets",
+         "shortNames": [
+            "ms"
+         ],
+         "singular": "managedsecret"
+      },
+      "scope": "Namespaced",
+      "validation": {
+         "openAPIV3Schema": {
+            "properties": {
+               "spec": {
+                  "properties": {
+                     "generation": {
+                        "type": "integer"
+                     },
+                     "project": {
+                        "type": "string"
+                     },
+                     "secret": {
+                        "type": "string"
+                     }
+                  },
+                  "type": "object"
+               },
+               "status": {
+                  "properties": {
+                     "bucket": {
+                        "type": "string"
+                     },
+                     "error": {
+                        "type": "string"
+                     },
+                     "generation": {
+                        "type": "integer"
+                     },
+                     "object": {
+                        "type": "string"
+                     }
+                  },
+                  "type": "object"
+               }
+            },
+            "type": "object"
+         }
+      },
+      "versions": [
+         {
+            "name": "v1",
+            "served": true,
+            "storage": true
+         }
+      ]
+   },
+   "status": {
+      "acceptedNames": {
+         "kind": "",
+         "plural": ""
+      },
+      "conditions": [ ],
+      "storedVersions": [ ]
+   }
+}
+---
+{
+   "apiVersion": "rbac.authorization.k8s.io/v1",
+   "kind": "ClusterRole",
+   "metadata": {
+      "name": "o-secret-manager-role"
+   },
+   "rules": [
+      {
+         "apiGroups": [
+            "endclothing.com"
+         ],
+         "resources": [
+            "managedsecrets"
+         ],
+         "verbs": [
+            "get",
+            "list",
+            "watch",
+            "create",
+            "update",
+            "patch"
+         ]
+      },
+      {
+         "apiGroups": [
+            ""
+         ],
+         "resources": [
+            "secrets"
+         ],
+         "verbs": [
+            "get",
+            "list",
+            "watch",
+            "create",
+            "update",
+            "patch",
+            "delete"
+         ]
+      }
+   ]
+}
+---
+{
+   "apiVersion": "rbac.authorization.k8s.io/v1",
+   "kind": "ClusterRoleBinding",
+   "metadata": {
+      "name": "o-secret-manager-binding"
+   },
+   "roleRef": {
+      "apiGroup": "rbac.authorization.k8s.io",
+      "kind": "ClusterRole",
+      "name": "o-secret-manager-role"
+   },
+   "subjects": [
+      {
+         "kind": "ServiceAccount",
+         "name": "o-secret-manager-sa",
+         "namespace": "default"
+      }
+   ]
+}
+...
